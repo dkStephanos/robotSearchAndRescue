@@ -22,7 +22,8 @@ namespace util_funcs {
 
     bool cmdOptionExists(char** begin, char** end, const std::string& option)
     {
-        return std::find(begin, end, option) != end;
+        char** arg = std::find(begin, end, option);
+        return arg != end && (end - arg) > 1;
     };
 
     int checkForSetupFile(char** argv, int argc, string setupfilename, Log& log1, std::ifstream& setupfile) {
@@ -46,11 +47,19 @@ namespace util_funcs {
         return 1;
     }
 
-    int checkForCommandFile(char** argv, int argc, string cmdfilename, std::ifstream& cmdfile, string line, std::vector<string> &commands) {
+    int checkForCommandFile(char** argv, int argc, string cmdfilename, Log& log1, std::ifstream& cmdfile, string line, std::vector<string> &commands) {
         //Check for command file name in command line arguments, opening if file is there, prompting for commands from the keyboard if not
         if(util_funcs::cmdOptionExists(argv, argv + argc, "-c")) {
             cmdfilename = util_funcs::getCmdOption(argv, argv + argc, "-c");
             cmdfile.open(cmdfilename);
+
+            if(cmdfile.fail()) {
+                string errormessage = "Command file " + cmdfilename + " does not exist.";
+                log1.writeLogRecord(errormessage);
+                log1.writeLogRecord("End");
+                cout << errormessage + "\n";
+                return -1;
+            }
             //Once we open the file, return 1
             return 1;
 
