@@ -1,3 +1,14 @@
+/**
+ * ---------------------------------------------------------------------------
+ * File name: main.cpp
+ * Project name: Project 3
+ * Purpose: Clones the parent process before having the child output the PIDs and the parent launches hw1.
+ * ---------------------------------------------------------------------------
+ * Creator's name and email: Koi Stephanos, stephanos@etsu.edu
+ * Course:  Operating Systems
+ * Creation Date: 2/12/2019
+ * ---------------------------------------------------------------------------
+*/
 #include "Log.h"
 #include "utilities.cpp"
 #include <iostream>
@@ -16,7 +27,6 @@ int main(int argc, char** argv) {
     //If log file name is present in command line arguments, set the logfilename for log1
     util_funcs::checkForLogFileAndSetLogFileName(argv, argc, log1);
 
-    log1.writeLogRecord(std::to_string(argc));
     //Check for and open setupfile, if return -1 something went wrong so exit.
     if(util_funcs::checkForSetupFile(argv, argc, setupfilename, log1, setupfile) == -1) {
         return 0;

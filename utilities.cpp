@@ -1,6 +1,14 @@
-//
-// Created by Koi Stephanos on 2019-01-31.
-//
+/**
+ * ---------------------------------------------------------------------------
+ * File name: utilities.cpp
+ * Project name: Project 3
+ * Purpose: Provides utility functions primarily for parsing command line arguments.
+ * ---------------------------------------------------------------------------
+ * Creator's name and email: Koi Stephanos, stephanos@etsu.edu
+ * Course:  Operating Systems
+ * Creation Date: 2/12/2019
+ * ---------------------------------------------------------------------------
+*/
 #include <iostream>
 #include <fstream>
 #include <string>

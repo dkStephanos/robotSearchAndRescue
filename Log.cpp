@@ -1,3 +1,14 @@
+/**
+ * ---------------------------------------------------------------------------
+ * File name: Log.cpp
+ * Project name: Project 3
+ * Purpose: Body of the Log class primarily used for opening/writing/closing the log file.
+ * ---------------------------------------------------------------------------
+ * Creator's name and email: Koi Stephanos, stephanos@etsu.edu
+ * Course:  Operating Systems
+ * Creation Date: 2/12/2019
+ * ---------------------------------------------------------------------------
+*/
 #include "Log.h"
 #include <iostream>
 #include <ctime>
