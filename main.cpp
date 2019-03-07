@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
     std::ifstream setupfile, cmdfile;
     Message msg{0, "Blagaga"};
     int file_desc[2], status;
-    pid_t pid;
+    pid_t pid, pid2;
 
     //If log file name is present in command line arguments, set the logfilename for log1
     util_funcs::checkForLogFileAndSetLogFileName(argv, argc, log1);
@@ -55,6 +55,7 @@ int main(int argc, char** argv) {
     }
 
     pid = fork();
+    pid2 = fork();
 
     if (pid == -1)
     {
@@ -68,10 +69,13 @@ int main(int argc, char** argv) {
         close(file_desc[1]);    // close unused write end
 
         while(read(file_desc[0], (void*)&msg, sizeof(Message)) > 0)
-            printf("Argument #%d: %s\n", msg.number, msg.payload);
+            printf("Robot #%d: %s\n", msg.from, msg.payload);
 
         close(file_desc[0]);    // close read end
         _exit(EXIT_SUCCESS);    // exit IMMEDIATELY
+    }
+    if (pid2 == 0) {
+      printf("%d\n", getpid());
     }
     // parent code
     else
@@ -81,7 +85,7 @@ int main(int argc, char** argv) {
         // write all messages
         for (int i = 1; i < argc; ++i)
         {
-            msg.number = i;
+            msg.from = i;
             if(strlen(argv[i]) < sizeof(msg.payload))
             {
                 strcpy(msg.payload, argv[i]);
