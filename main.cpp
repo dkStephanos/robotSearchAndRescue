@@ -16,6 +16,16 @@
 #include <algorithm>
 #include <sstream>
 #include <vector>
+#include <sys/wait.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+struct Message
+{
+    int from;
+    char payload[32];
+};
 
 int main(int argc, char** argv) {
 
@@ -23,6 +33,9 @@ int main(int argc, char** argv) {
     string setupfilename, cmdfilename, line;
     std::vector<string> commands;
     std::ifstream setupfile, cmdfile;
+    Message msg{0, "Blagaga"};
+    int file_desc[2], status;
+    pid_t pid;
 
     //If log file name is present in command line arguments, set the logfilename for log1
     util_funcs::checkForLogFileAndSetLogFileName(argv, argc, log1);
@@ -35,8 +48,54 @@ int main(int argc, char** argv) {
     //Check for cmdfile, getting input from user if not found
     util_funcs::checkForCommandFile(argv, argc, cmdfilename, log1, cmdfile, line, commands);
 
-    //Pass in the log obect, our setup/command files, the command vector in case we took in user input and let log do its thing
-    util_funcs::processSetupAndCommandInstructions(log1, setupfile, cmdfile, commands, line);
+    if (pipe(file_desc) == -1)
+    {
+        perror("pipe() failed. Exiting...");
+        exit(EXIT_FAILURE);
+    }
+
+    pid = fork();
+
+    if (pid == -1)
+    {
+        perror("fork() failed. Exiting...");
+        exit(EXIT_FAILURE);
+    }
+
+    // child code
+    if (pid == 0)
+    {
+        close(file_desc[1]);    // close unused write end
+
+        while(read(file_desc[0], (void*)&msg, sizeof(Message)) > 0)
+            printf("Argument #%d: %s\n", msg.number, msg.payload);
+
+        close(file_desc[0]);    // close read end
+        _exit(EXIT_SUCCESS);    // exit IMMEDIATELY
+    }
+    // parent code
+    else
+    {
+        close(file_desc[0]);    // close unused read end
+
+        // write all messages
+        for (int i = 1; i < argc; ++i)
+        {
+            msg.number = i;
+            if(strlen(argv[i]) < sizeof(msg.payload))
+            {
+                strcpy(msg.payload, argv[i]);
+                msg.payload[strlen(msg.payload)] = '\0';
+            }
+            else
+                strcpy(msg.payload, "Argument too long!");
+
+            write(file_desc[1], (void*)&msg, sizeof(msg));
+        }
+        close(file_desc[1]);    // EOF to child
+        wait(&status);          // wait on child to terminate
+        exit(EXIT_SUCCESS);
+    }
 
     return 0;
 }
