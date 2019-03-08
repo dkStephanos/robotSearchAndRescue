@@ -1,5 +1,5 @@
-A B
-C D
-E F
-G H
+M 1 N
+M 1 N
+M 2 E
+M 1 E
 Q
