@@ -45,8 +45,15 @@ int main(int argc, char** argv) {
         return 0;
     }
 
+    //Process Setup instructions
+    util_funcs::processSetupInstructions(log1, setupfile, line);
+
     //Check for cmdfile, getting input from user if not found
     util_funcs::checkForCommandFile(argv, argc, cmdfilename, log1, cmdfile, line, commands);
+
+    //Process Command processSetupInstructions
+    util_funcs::processCommandInstructions(log1, cmdfile, commands, line);
+
 
     if (pipe(file_desc) == -1)
     {

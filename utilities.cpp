@@ -94,18 +94,32 @@ namespace util_funcs {
         return -1;
     }
 
-    int processSetupAndCommandInstructions(Log& log1, std::ifstream& setupfile, std::ifstream& cmdfile, std::vector<string> &commands, string line) {
+    int processSetupInstructions(Log& log1, std::ifstream& setupfile, string line) {
 
         //If result of open is 0, something went wrong, so we exit, otherwise, loop through setup and command lines, appending to log
         if(log1.open() == 0) {
             return 0;
         } else {
-            //First loop through setup instructions
+            //Loop through setup instructions
             while (std::getline(setupfile, line))
             {
                 log1.writeLogRecord(line);
             }
-            //Next loop through command instructions, using the commands vector if populated, otherwise reading in from cmdfile
+            //Finally, close log1 appending final timestamp and "End"
+            log1.close();
+        }
+
+        //If we get this far, we're good, so return 1
+        return 1;
+    }
+
+    int processCommandInstructions(Log& log1, std::ifstream& cmdfile, std::vector<string> &commands, string line) {
+
+        //If result of open is 0, something went wrong, so we exit, otherwise, loop through setup and command lines, appending to log
+        if(log1.open() == 0) {
+            return 0;
+        } else {
+            //Loop through command instructions, using the commands vector if populated, otherwise reading in from cmdfile
             if(commands.size() > 0) {
                 for(int i = 0; i < commands.size(); i++) {
                     log1.writeLogRecord(commands[i]);
@@ -116,7 +130,6 @@ namespace util_funcs {
                     log1.writeLogRecord(line);
                 }
             }
-
             //Finally, close log1 appending final timestamp and "End"
             log1.close();
         }
