@@ -1,5 +1,5 @@
-#ifndef LOG_H
-#define LOG_H
+#ifndef ROBOT_H
+#define ROBOT_H
 /**
  * ---------------------------------------------------------------------------
  * File name: Robot.h
@@ -11,13 +11,13 @@
  * Creation Date: 3/8/2019
  * ---------------------------------------------------------------------------
 */
-
 #include "Board.h"
+#include <string>
 
 class Robot {
 private:
-    static int postion [2];
-    static Board board;
+    int position [2];
+    Board board;
 
     //Updates the position of the robot
     void setPosition(int curr_position[2]);
@@ -32,10 +32,13 @@ public:
     //Returns current position of robot as a pointer to an array containing (x,y)
     int * getPosition();
 
+    //Returns current board
+    Board getBoard();
+
     //Moves the robot the specified distance in the specified direction by
     //utilizing the private setPosition method.
     int updatePosition(int distance, char direction);
-    
+
 }; // class Robot
 
 #endif

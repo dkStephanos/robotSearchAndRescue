@@ -9,34 +9,41 @@
  * Creation Date: 3/8/2019
  * ---------------------------------------------------------------------------
 */
-
 #include "Robot.h"
 #include "Board.h"
 
 Robot::Robot() {
-  position = {0,0};
+  position[0] = 0;
+  position[1] = 0;
 }
 
 Robot::Robot(Board curr_board) {
-  position = {0,0};
+  position[0] = 0;
+  position[1] = 0;
   board = curr_board;
 }
 
 void Robot::setPosition(int curr_position[2]) {
-  position = curr_position;
+  position[0] = curr_position[0];
+  position[1] = curr_position[1];
 }
 
 int * Robot::getPosition() {
-  return position;
+  return this->position;
 }
 
-int updatePosition(int distance, char direction) {
+Board Robot::getBoard() {
+  return this->board;
+}
+
+int Robot::updatePosition(int distance, char direction) {
+
   switch(direction) {
     case 'N':
-      if(position[0] + distance < board.X) {  //if we can move the whole distance, do it
+      if(position[0] + distance < board.width) {  //if we can move the whole distance, do it
         position[0] += distance;
-      } else if(position[0] < board.X - 1) { //otherwise, provided we aren't already at the edge, move there
-        position[0] = board.X - 1;
+      } else if(position[0] < board.width - 1) { //otherwise, provided we aren't already at the edge, move there
+        position[0] = board.width - 1;
       }
       break;
     case 'S':
@@ -47,10 +54,10 @@ int updatePosition(int distance, char direction) {
       }
       break;
     case 'E':
-      if(position[1] + distance < board.Y) {  //if we can move the whole distance, do it
+      if(position[1] + distance < board.height) {  //if we can move the whole distance, do it
         position[1] += distance;
-      } else if(position[1] < board.Y - 1) { //otherwise, provided we aren't already at the edge, move there
-        position[1] = board.Y - 1;
+      } else if(position[1] < board.height - 1) { //otherwise, provided we aren't already at the edge, move there
+        position[1] = board.height - 1;
       }
       break;
     case 'W':
