@@ -10,6 +10,7 @@
  * ---------------------------------------------------------------------------
 */
 #include "Log.h"
+#include "Board.h"
 #include "utilities.cpp"
 #include <iostream>
 #include <fstream>
@@ -21,8 +22,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-struct Message
-{
+struct Message {
     int from;
     char payload[32];
 };
@@ -33,6 +33,7 @@ int main(int argc, char** argv) {
     string setupfilename, cmdfilename, line;
     std::vector<string> commands;
     std::ifstream setupfile, cmdfile;
+    Board board;
     Message msg{0, "Blagaga"};
     int file_desc[2], status;
     pid_t pid, pid2;
@@ -46,7 +47,7 @@ int main(int argc, char** argv) {
     }
 
     //Process Setup instructions
-    util_funcs::processSetupInstructions(log1, setupfile, line);
+    util_funcs::processSetupInstructions(log1, setupfile, line, board);
 
     //Check for cmdfile, getting input from user if not found
     util_funcs::checkForCommandFile(argv, argc, cmdfilename, log1, cmdfile, line, commands);

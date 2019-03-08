@@ -16,6 +16,7 @@
 #include <vector>
 #include <algorithm>
 #include "Log.h"
+#include "Board.h"
 
 namespace util_funcs {
     char* getCmdOption(char ** begin, char ** end, const std::string & option)
@@ -94,7 +95,7 @@ namespace util_funcs {
         return -1;
     }
 
-    int processSetupInstructions(Log& log1, std::ifstream& setupfile, string line) {
+    int processSetupInstructions(Log& log1, std::ifstream& setupfile, string line, Board &board) {
 
         //If result of open is 0, something went wrong, so we exit, otherwise, loop through setup and command lines, appending to log
         if(log1.open() == 0) {
