@@ -105,6 +105,25 @@ namespace util_funcs {
             while (std::getline(setupfile, line))
             {
                 log1.writeLogRecord(line);
+                std::stringstream   linestream(line);
+                std::string         data;
+                int                 val;
+
+                //Break the line into chunks based on a space delimter, and place the integer into val
+                std::getline(linestream, data, ' ');
+                linestream >> val;
+
+                //Place the value in our board struct depending on what line we are reading
+                if(data == "R") {
+                  board.numrobots = val;
+                } else if(data == "X") {
+                  board.width = val;
+                } else if(data == "Y") {
+                  board.height = val;
+                } else {
+                  log1.writeLogRecord("Bad Setup File"); //Write to log so we know we had a bad setup file
+                  return -1; //return -1 so we know something went wrong
+                }
             }
             //Finally, close log1 appending final timestamp and "End"
             log1.close();

@@ -47,7 +47,10 @@ int main(int argc, char** argv) {
     }
 
     //Process Setup instructions
-    util_funcs::processSetupInstructions(log1, setupfile, line, board);
+    if(util_funcs::processSetupInstructions(log1, setupfile, line, board) == -1) {
+      cout << "Bad Setup File\n";
+      return 0;
+    }
 
     //Check for cmdfile, getting input from user if not found
     util_funcs::checkForCommandFile(argv, argc, cmdfilename, log1, cmdfile, line, commands);
