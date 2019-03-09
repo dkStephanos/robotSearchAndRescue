@@ -37,7 +37,7 @@ public:
 
     //Moves the robot the specified distance in the specified direction by
     //utilizing the private setPosition method.
-    int updatePosition(int distance, char direction);
+    int updatePosition(char direction);
 
 }; // class Robot
 
