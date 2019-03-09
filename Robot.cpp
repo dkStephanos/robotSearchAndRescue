@@ -37,7 +37,7 @@ Board Robot::getBoard() {
 }
 
 int Robot::updatePosition(char direction) {
-  int direction = 1;      //Can be moved to parameter later on to allow for moves of multiple lengths.
+  int distance = 1;      //Can be moved to parameter later on to allow for moves of multiple lengths.
   switch(direction) {
     case 'N':
       if(position[0] + distance < board.width) {  //if we can move the whole distance, do it
