@@ -50,98 +50,98 @@ int main(int argc, char** argv) {
       return 0;
     }
 
-    const int NUMBER_OF_CHILDREN = board.numrobots;
+    const int NUMBER_OF_ROBOTS = board.numrobots;
     std::vector<string> cmdline_commands;
-    std::vector<string> robotcommands[NUMBER_OF_CHILDREN];
+    std::vector<string> robotcommands[NUMBER_OF_ROBOTS];
     Message msg{0, "Blagaga"};
-    Robot robots[NUMBER_OF_CHILDREN];
-    int childpipes[NUMBER_OF_CHILDREN * 2];
+    Robot robots[NUMBER_OF_ROBOTS];
+    int robotpipes[NUMBER_OF_ROBOTS * 2];
     int newpipe[2], status;
     int pipes_count = 0;
-    pid_t shut_down[NUMBER_OF_CHILDREN];
+    pid_t robot_pids[NUMBER_OF_ROBOTS];
     pid_t child;
     pid_t parent = ::getpid();
-    printf ("Parent is %d, num children = %d\n", parent, NUMBER_OF_CHILDREN);
+    printf ("Parent is %d, num children = %d\n", parent, NUMBER_OF_ROBOTS);
 
     //Check for cmdfile, getting input from user if not found
     util_funcs::checkForCommandFile(argv, argc, cmdfilename, log1, cmdfile, line, cmdline_commands);
 
-    //Process Command processSetupInstructions
-    util_funcs::processCommandInstructions(log1, cmdfile, cmdline_commands, line, robotcommands, NUMBER_OF_CHILDREN);
+    //Process Command instructions building a vector for each Child/Robot
+    util_funcs::processCommandInstructions(log1, cmdfile, cmdline_commands, line, robotcommands, NUMBER_OF_ROBOTS);
 
-    //Create the pipes
-    while (pipes_count < (NUMBER_OF_CHILDREN * 2)) {
+    //Create the pipes for the robots, building an array where:
+    // (robot number -1) * 2 is the read end and and ((robot number - 1) * 2) + 1 is the write end
+    while (pipes_count < (NUMBER_OF_ROBOTS * 2)) {
         // Pipe creation
         pipe(newpipe);
-        printf ("creating pipe %d\n", pipes_count/2);
-        childpipes[pipes_count++] = newpipe[0];  // Just the read end of the pipe
-        childpipes[pipes_count++] = newpipe[1]; // The write end
-
+        printf ("creating robotpipe %d\n", pipes_count/2);
+        robotpipes[pipes_count++] = newpipe[0];  // Just the read end of the pipe
+        robotpipes[pipes_count++] = newpipe[1]; // The write end
     }
 
+
     //Write all robot commands from robotcommands
-    for (int i = 0; i < NUMBER_OF_CHILDREN; i++) {
+    for (int i = 0; i < NUMBER_OF_ROBOTS; i++) {
       for (int j = 0; j < robotcommands[i].size(); j++) {
           msg.from = j;
           strcpy(msg.payload, robotcommands[i][j].c_str());
           msg.payload[strlen(msg.payload)] = '\0';
 
-          write(childpipes[i*2 + 1], (void*)&msg, sizeof(msg));
-          printf("Wrote to pipe #%d this: %s \n", i, msg.payload);
+          write(robotpipes[i*2 + 1], (void*)&msg, sizeof(msg));
+          //printf("Wrote to pipe #%d this: %s \n", i, msg.payload);
       }
-      close(childpipes[i*2 + 1]);      // EOF to child
+      close(robotpipes[i*2 + 1]);      // EOF to child
     }
 
     //Create the children
-    child = fork();
+    /*child = fork();
     if(child == 0) {
-      //printf ("storing child %d\n", getpid());
-      shut_down[0] = getpid();   //Store the pid so we can wait on it later
+      robot_pids[0] = ::getpid();   //Store the pid so we can wait on it later
     } else {
-      shut_down[0] = child;
-    }
-    for (int i = 1 ; i < NUMBER_OF_CHILDREN ; i++)  {
+      robot_pids[0] = child;
+    }*/
+    //Create the robot processes, storing their pid's for parent to wait on
+    for (int i = 0 ; i < NUMBER_OF_ROBOTS ; i++)  {
       if (child < 0) {
         perror ("Unable to fork");
         exit(1);
       } else if (child != 0) {
-          //printf ("creating child %d\n", i);
           child = fork();         //Creates our next child process
+          //Child code
           if(child == 0) {
-            //printf ("storing child %d\n", getpid());
-            shut_down[i] = getpid();   //Store the pid so we can wait on it later
-            robots[i] = Robot(board);     //Create a robot for the child
+            robot_pids[i] = ::getpid();   //Store the pid so we know which child we have for pipe reads
+            robots[i] = Robot(board);     //Create the robot from the current board
           } else {
-            shut_down[i] = child;
+            robot_pids[i] = child;
           }
-    }
-
-    }
-
-    for(int i = 0; i < NUMBER_OF_CHILDREN; i++) {
-      // child code
-       if(shut_down[i] == getpid()) {
-        //printf("Robot %d Attempting read from pipe %d\n", ::getpid(), i);
-        close(childpipes[i*2 + 1]);    // close unused write end
-
-        //int *position = robots[i].getPosition();
-        //cout << std::to_string(position[0]) << "   " << std::to_string(position[1]) << "\n";
-
-        while(read(childpipes[i*2], (void*)&msg, sizeof(Message)) > 0) {
-            printf("Robot #%d: %s\n", ::getpid(), msg.payload);
-        }
-        close(childpipes[i*2]);    // close read end
-      } else {
-        //printf("%d != %d when i = %d\n", shut_down[i], getpid(), i);
       }
     }
 
+    //Child code for reading/processing commands. Loop through robots based on pid, and read
+    //from the corresponding pipe, process the move, and send updated position to parent for logging
+    for(int i = 0; i < NUMBER_OF_ROBOTS; i++) {
+      // child code
+      if(robot_pids[i] == ::getpid()) {
+        close(robotpipes[i*2 + 1]);    // close unused write end
+
+        while(read(robotpipes[i*2], (void*)&msg, sizeof(Message)) > 0) {
+            printf("Robot #%d: %s\n", ::getpid(), msg.payload);
+            //int *position = robots[i].getPosition();
+            //cout << std::to_string(position[0]) << "   " << std::to_string(position[1]) << "\n";
+        }
+        close(robotpipes[i*2]);    // close read end
+      }
+    }
+
+    //TODO
+    //Loop through parents pipe and pass on to logging process
+
     //Wait on children to die...
     if(parent == ::getpid()) {
-      for (int i = 0; i < NUMBER_OF_CHILDREN; i++){
-        cout << "Waiting for PID: " << shut_down[i] << " to finish" << endl;
-        waitpid(shut_down[i], NULL, 0);
-        cout << "PID: " << shut_down[i] << " has shut down" << endl;
+      for (int i = 0; i < NUMBER_OF_ROBOTS; i++){
+        cout << "Waiting for PID: " << robot_pids[i] << " to finish" << endl;
+        waitpid(robot_pids[i], NULL, 0);
+        cout << "PID: " << robot_pids[i] << " has shut down" << endl;
       }
     }
     return 0;
