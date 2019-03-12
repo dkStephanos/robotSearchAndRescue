@@ -134,36 +134,25 @@ namespace util_funcs {
     }
 
     int processCommandInstructions(Log& log1, std::ifstream& cmdfile, std::vector<string> &commands, string line, std::vector<string> *robotcommands, int numrobots) {
-
-        //If result of open is 0, something went wrong, so we exit, otherwise, loop through setup and command lines, appending to log
-        if(log1.open() == 0) {
-            return 0;
-        } else {
-            //Loop through command instructions, using the commands vector if populated, otherwise reading in from cmdfile
-            if(commands.size() > 0) {
-                for(int i = 0; i < commands.size(); i++) {
-                    for(int j = 1; j <= numrobots; j++) {
-                      if(commands[i].find(std::to_string(j)) != std::string::npos) {
-                        robotcommands[j-1].push_back(commands[i]);
-                        //log1.writeLogRecord(robotcommands[j-1][0]);
-                      }
-                    }
-                }
-            } else {
-                while (std::getline(cmdfile, line))
-                {
-                  for(int j = 1; j <= numrobots; j++) {
-                    if(line.find(std::to_string(j)) != std::string::npos) {
-                      robotcommands[j-1].push_back(line);
-                      //log1.writeLogRecord(robotcommands[j-1][0]);
-                    }
+        //Loop through command instructions, using the commands vector if populated, otherwise reading in from cmdfile
+        if(commands.size() > 0) {
+            for(int i = 0; i < commands.size(); i++) {
+                for(int j = 1; j <= numrobots; j++) {
+                  if(commands[i].find(std::to_string(j)) != std::string::npos) {
+                    robotcommands[j-1].push_back(commands[i]);
                   }
                 }
             }
-            //Finally, close log1 appending final timestamp and "End"
-            log1.close();
+        } else {
+            while (std::getline(cmdfile, line))
+            {
+              for(int j = 1; j <= numrobots; j++) {
+                if(line.find(std::to_string(j)) != std::string::npos) {
+                  robotcommands[j-1].push_back(line);
+                }
+              }
+            }
         }
-
         //If we get this far, we're good, so return 1
         return 1;
     }
