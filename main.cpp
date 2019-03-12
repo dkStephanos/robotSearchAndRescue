@@ -56,8 +56,9 @@ int main(int argc, char** argv) {
     Message msg{0, "Blagaga"};
     Robot robots[NUMBER_OF_ROBOTS];
     int robotpipes[NUMBER_OF_ROBOTS * 2];
-    int newpipe[2], status;
+    int newpipe[2], parentpipe[2];
     int pipes_count = 0;
+    string robotupdate;
     pid_t robot_pids[NUMBER_OF_ROBOTS];
     pid_t child;
     pid_t parent = ::getpid();
@@ -69,6 +70,9 @@ int main(int argc, char** argv) {
     //Process Command instructions building a vector for each Child/Robot
     util_funcs::processCommandInstructions(log1, cmdfile, cmdline_commands, line, robotcommands, NUMBER_OF_ROBOTS);
 
+    //Create the parent pipe for the robots to send status updates through
+    pipe(parentpipe);
+
     //Create the pipes for the robots, building an array where:
     // (robot number -1) * 2 is the read end and and ((robot number - 1) * 2) + 1 is the write end
     while (pipes_count < (NUMBER_OF_ROBOTS * 2)) {
@@ -78,7 +82,6 @@ int main(int argc, char** argv) {
         robotpipes[pipes_count++] = newpipe[0];  // Just the read end of the pipe
         robotpipes[pipes_count++] = newpipe[1]; // The write end
     }
-
 
     //Write all robot commands from robotcommands
     for (int i = 0; i < NUMBER_OF_ROBOTS; i++) {
@@ -123,22 +126,34 @@ int main(int argc, char** argv) {
       // child code
       if(robot_pids[i] == ::getpid()) {
         close(robotpipes[i*2 + 1]);    // close unused write end
+        close(parentpipe[0]);          // close unused read end of parent pipe
 
+        //Read all commands from pipe
         while(read(robotpipes[i*2], (void*)&msg, sizeof(Message)) > 0) {
             printf("Robot #%d: %s\n", ::getpid(), msg.payload);
+            //Take the direction from the end of command and pass to getPosition robot method
             robots[i].updatePosition(msg.payload[strlen(msg.payload) -1]);
             int *position = robots[i].getPosition();
-            cout << std::to_string(position[0]) << "   " << std::to_string(position[1]) << "\n";
+            //Build update string and write to parent pipe
+            robotupdate = "P " + std::to_string(i + 1) + " " + std::to_string(position[0]) + " " + std::to_string(position[1]);
+            cout << robotupdate << "\n";
+            strcpy(msg.payload, robotupdate.c_str());
+            msg.payload[strlen(msg.payload)] = '\0';
+            write(parentpipe[1], (void*)&msg, sizeof(msg));
         }
         close(robotpipes[i*2]);    // close read end
       }
     }
 
-    //TODO
-    //Loop through parents pipe and pass on to logging process
-
-    //Wait on children to die...
+    //Parent Code
     if(parent == ::getpid()) {
+      //Close unused write end
+      close(parentpipe[1]);
+      //Loop through parents pipe and pass on to logging process
+      while(read(parentpipe[0], (void*)&msg, sizeof(Message)) > 0) {
+          printf("Parent received: %s\n", msg.payload);
+      }
+      //Wait on children to die...
       for (int i = 0; i < NUMBER_OF_ROBOTS; i++){
         cout << "Waiting for PID: " << robot_pids[i] << " to finish" << endl;
         waitpid(robot_pids[i], NULL, 0);
