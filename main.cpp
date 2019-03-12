@@ -79,24 +79,18 @@ int main(int argc, char** argv) {
 
     }
 
-    // write all messages
-    string messages [3];
-    messages[0] = "M 1 N";
-    messages[1] = "M 2 E";
-    messages[2] = "M 3 S";
+    //Write all robot commands from robotcommands
+    for (int i = 0; i < NUMBER_OF_CHILDREN; i++) {
+      for (int j = 0; j < robotcommands[i].size(); j++) {
+          msg.from = j;
+          strcpy(msg.payload, robotcommands[i][j].c_str());
+          msg.payload[strlen(msg.payload)] = '\0';
 
-
-    for (int j = 0; j < NUMBER_OF_CHILDREN; j++) {
-        msg.from = j;
-        strcpy(msg.payload, messages[j].c_str());
-        msg.payload[strlen(msg.payload)] = '\0';
-
-        write(childpipes[j*2 + 1], (void*)&msg, sizeof(msg));
-        write(childpipes[j*2 + 1], (void*)&msg, sizeof(msg));
-        printf("Wrote to pipe #%d this: %s \n", j, msg.payload);
-        close(childpipes[j*2 + 1]);      // EOF to child
+          write(childpipes[i*2 + 1], (void*)&msg, sizeof(msg));
+          printf("Wrote to pipe #%d this: %s \n", i, msg.payload);
+      }
+      close(childpipes[i*2 + 1]);      // EOF to child
     }
-
 
     //Create the children
     child = fork();
