@@ -115,10 +115,22 @@ namespace util_funcs {
 
                 //Place the value in our board struct depending on what line we are reading
                 if(data == "R") {
+                  if(val > 5 || val < 1) {
+                    log1.writeLogRecord("NumRobots must be between 1-5"); //Write to log so we know we had a bad setup file
+                    return -1; //return -1 so we know something went wrong
+                  }
                   board.numrobots = val;
                 } else if(data == "X") {
+                  if(val > 20 || val < 1) {
+                    log1.writeLogRecord("Width must be between 1-20"); //Write to log so we know we had a bad setup file
+                    return -1; //return -1 so we know something went wrong
+                  }
                   board.width = val;
                 } else if(data == "Y") {
+                  if(val > 20 || val < 1) {
+                    log1.writeLogRecord("Height must be between 1-20"); //Write to log so we know we had a bad setup file
+                    return -1; //return -1 so we know something went wrong
+                  }
                   board.height = val;
                 } else {
                   log1.writeLogRecord("Bad Setup File"); //Write to log so we know we had a bad setup file
