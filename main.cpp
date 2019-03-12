@@ -156,14 +156,16 @@ int main(int argc, char** argv) {
       logPID = fork();
       //Log code
       if(logPID == 0) {
-        //Close unused write end of logpipe
+        //Close unused write end of logpipe and open logfile
         close(logpipe[1]);
+        log1.open();
         //Read all the updates from the parent and print them to the log
         while(read(logpipe[0], (void*)&msg, sizeof(Message)) > 0) {
-            printf("Log received: %s\n", msg.payload);
+            log1.writeLogRecord(msg.payload);
         }
-        //Close read end of logpipe
+        //Close read end of logpipe and close logfile
         close(logpipe[0]);
+        log1.close();
       } else {  //More parent code
         close(logpipe[0]);
         //Loop through parents pipe and pass on to logging process
