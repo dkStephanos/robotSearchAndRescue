@@ -126,8 +126,9 @@ int main(int argc, char** argv) {
 
         while(read(robotpipes[i*2], (void*)&msg, sizeof(Message)) > 0) {
             printf("Robot #%d: %s\n", ::getpid(), msg.payload);
-            //int *position = robots[i].getPosition();
-            //cout << std::to_string(position[0]) << "   " << std::to_string(position[1]) << "\n";
+            robots[i].updatePosition(msg.payload[strlen(msg.payload) -1]);
+            int *position = robots[i].getPosition();
+            cout << std::to_string(position[0]) << "   " << std::to_string(position[1]) << "\n";
         }
         close(robotpipes[i*2]);    // close read end
       }
