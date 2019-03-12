@@ -51,7 +51,8 @@ int main(int argc, char** argv) {
     }
 
     const int NUMBER_OF_CHILDREN = board.numrobots;
-    std::vector<string> commands;
+    std::vector<string> cmdline_commands;
+    std::vector<string> robotcommands[NUMBER_OF_CHILDREN];
     Message msg{0, "Blagaga"};
     Robot robots[NUMBER_OF_CHILDREN];
     int childpipes[NUMBER_OF_CHILDREN * 2];
@@ -63,10 +64,10 @@ int main(int argc, char** argv) {
     printf ("Parent is %d, num children = %d\n", parent, NUMBER_OF_CHILDREN);
 
     //Check for cmdfile, getting input from user if not found
-    util_funcs::checkForCommandFile(argv, argc, cmdfilename, log1, cmdfile, line, commands);
+    util_funcs::checkForCommandFile(argv, argc, cmdfilename, log1, cmdfile, line, cmdline_commands);
 
     //Process Command processSetupInstructions
-    util_funcs::processCommandInstructions(log1, cmdfile, commands, line);
+    util_funcs::processCommandInstructions(log1, cmdfile, cmdline_commands, line, robotcommands, NUMBER_OF_CHILDREN);
 
     //Create the pipes
     while (pipes_count < (NUMBER_OF_CHILDREN * 2)) {
@@ -77,25 +78,20 @@ int main(int argc, char** argv) {
         childpipes[pipes_count++] = newpipe[1]; // The write end
 
     }
-    /*for (int i = 0 ; i < NUMBER_OF_CHILDREN ; i++)  {
-      if (pipe(childpipes + i * 2) < 0) {
-          perror("pipe() failed. Exiting...");
-          exit(EXIT_FAILURE);
-      }
-      printf ("creating pipe %d\n", i);
-    } */
+
     // write all messages
     string messages [3];
     messages[0] = "M 1 N";
     messages[1] = "M 2 E";
     messages[2] = "M 3 S";
 
-    
+
     for (int j = 0; j < NUMBER_OF_CHILDREN; j++) {
         msg.from = j;
         strcpy(msg.payload, messages[j].c_str());
         msg.payload[strlen(msg.payload)] = '\0';
 
+        write(childpipes[j*2 + 1], (void*)&msg, sizeof(msg));
         write(childpipes[j*2 + 1], (void*)&msg, sizeof(msg));
         printf("Wrote to pipe #%d this: %s \n", j, msg.payload);
         close(childpipes[j*2 + 1]);      // EOF to child

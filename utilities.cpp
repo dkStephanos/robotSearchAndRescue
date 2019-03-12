@@ -133,7 +133,7 @@ namespace util_funcs {
         return 1;
     }
 
-    int processCommandInstructions(Log& log1, std::ifstream& cmdfile, std::vector<string> &commands, string line) {
+    int processCommandInstructions(Log& log1, std::ifstream& cmdfile, std::vector<string> &commands, string line, std::vector<string> *robotcommands, int numrobots) {
 
         //If result of open is 0, something went wrong, so we exit, otherwise, loop through setup and command lines, appending to log
         if(log1.open() == 0) {
@@ -142,12 +142,22 @@ namespace util_funcs {
             //Loop through command instructions, using the commands vector if populated, otherwise reading in from cmdfile
             if(commands.size() > 0) {
                 for(int i = 0; i < commands.size(); i++) {
-                    log1.writeLogRecord(commands[i]);
+                    for(int j = 1; j <= numrobots; j++) {
+                      if(commands[i].find(std::to_string(j)) != std::string::npos) {
+                        robotcommands[j-1].push_back(commands[i]);
+                        //log1.writeLogRecord(robotcommands[j-1][0]);
+                      }
+                    }
                 }
             } else {
                 while (std::getline(cmdfile, line))
                 {
-                    log1.writeLogRecord(line);
+                  for(int j = 1; j <= numrobots; j++) {
+                    if(line.find(std::to_string(j)) != std::string::npos) {
+                      robotcommands[j-1].push_back(line);
+                      //log1.writeLogRecord(robotcommands[j-1][0]);
+                    }
+                  }
                 }
             }
             //Finally, close log1 appending final timestamp and "End"
