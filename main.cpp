@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
 
         //Read all commands from pipe
         while(read(robotpipes[i*2], (void*)&msg, sizeof(Message)) > 0) {
-            printf("Robot #%d: %s\n", ::getpid(), msg.payload);
+            printf("Robot #%d received: %s\n", (i + 1), msg.payload);
             //Take the direction from the end of command and pass to getPosition robot method
             robots[i].updatePosition(msg.payload[strlen(msg.payload) -1]);
             int *position = robots[i].getPosition();
@@ -161,6 +161,7 @@ int main(int argc, char** argv) {
         log1.open();
         //Read all the updates from the parent and print them to the log
         while(read(logpipe[0], (void*)&msg, sizeof(Message)) > 0) {
+            printf("Log received: %s\n", msg.payload);
             log1.writeLogRecord(msg.payload);
         }
         //Close read end of logpipe and close logfile
@@ -170,7 +171,7 @@ int main(int argc, char** argv) {
         close(logpipe[0]);
         //Loop through parents pipe and pass on to logging process
         while(read(parentpipe[0], (void*)&msg, sizeof(Message)) > 0) {
-            //printf("Parent received: %s\n", msg.payload);
+            printf("Parent received: %s\n", msg.payload);
             msg.payload[strlen(msg.payload)] = '\0';
             write(logpipe[1], (void*)&msg, sizeof(msg));
         }
