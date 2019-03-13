@@ -39,28 +39,28 @@ Board Robot::getBoard() {
 int Robot::updatePosition(char direction) {
   int distance = 1;      //Can be moved to parameter later on to allow for moves of multiple lengths.
   switch(direction) {
-    case 'N':
+    case 'E':
       if(position[0] + distance < board.width) {  //if we can move the whole distance, do it
         position[0] += distance;
       } else if(position[0] < board.width - 1) { //otherwise, provided we aren't already at the edge, move there
         position[0] = board.width - 1;
       }
       break;
-    case 'S':
+    case 'W':
       if(position[0] - distance >= 0) {  //if we can move the whole distance, do it
         position[0] -= distance;
       } else if(position[0] > 0) { //otherwise, provided we aren't already at the edge, move there
         position[0] = 0;
       }
       break;
-    case 'E':
+    case 'N':
       if(position[1] + distance < board.height) {  //if we can move the whole distance, do it
         position[1] += distance;
       } else if(position[1] < board.height - 1) { //otherwise, provided we aren't already at the edge, move there
         position[1] = board.height - 1;
       }
       break;
-    case 'W':
+    case 'S':
       if(position[1] - distance >= 0) {  //if we can move the whole distance, do it
         position[1] -= distance;
       } else if(position[1] > 1) { //otherwise, provided we aren't already at the edge, move there
