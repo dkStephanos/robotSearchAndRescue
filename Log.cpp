@@ -49,7 +49,7 @@ string Log::getDefaultLogfileName() {
 }
 
 int Log::open() {
-    std::ofstream logF(logfilename, std::ios_base::app);
+    std::ofstream logF(logfilename, ios::out | ios::app);
     if(!logF.fail()) {
         logF << getTimeStamp() << "Begin\n";
         logF.close();
