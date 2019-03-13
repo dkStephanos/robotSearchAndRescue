@@ -149,23 +149,38 @@ namespace util_funcs {
         //Loop through command instructions, using the commands vector if populated, otherwise reading in from cmdfile
         if(commands.size() > 0) {
             for(int i = 0; i < commands.size(); i++) {
-                for(int j = 1; j <= numrobots; j++) {
-                  if(commands[i].find(std::to_string(j)) != std::string::npos) {
-                    robotcommands[j-1].push_back(commands[i]);
+                  for(int j = 1; j <= numrobots; j++) {
+                    if(commands[i].find(std::to_string(j)) != std::string::npos) {
+                      if(commands[i][0] == 'M' && (commands[i][commands[i].size() - 1] == 'N' || commands[i][commands[i].size() - 1] == 'W' || commands[i][commands[i].size() - 1] == 'E' || commands[i][commands[i].size() - 1] == 'S')) {
+                        robotcommands[j-1].push_back(commands[i]);
+                      } else {
+                        log1.writeLogRecord("Bad command: " + commands[i]);
+                      }
+                    }
                   }
-                }
-            }
-        } else {
+              }
+            } else {
             while (std::getline(cmdfile, line))
             {
               for(int j = 1; j <= numrobots; j++) {
                 if(line.find(std::to_string(j)) != std::string::npos) {
-                  robotcommands[j-1].push_back(line);
+                  if (line[0] == 'M' && (line[line.size() - 1] == 'N' || line[line.size() - 1] == 'W' || line[line.size() - 1] == 'E' || line[line.size() - 1] == 'S')) {
+                    robotcommands[j-1].push_back(line);
+                  } else {
+                    log1.writeLogRecord("Bad command: " + line);
+                  }
                 }
               }
             }
         }
         //If we get this far, we're good, so return 1
         return 1;
+    }
+
+    int sendToLog(Log& log1, string line) {
+      if(log1.writeLogRecord(line)) {
+        return 1;
+      }
+      return -1;
     }
 }
