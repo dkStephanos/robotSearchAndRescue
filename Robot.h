@@ -1,5 +1,3 @@
-#ifndef ROBOT_H
-#define ROBOT_H
 /**
  * ---------------------------------------------------------------------------
  * File name: Robot.h
@@ -11,6 +9,9 @@
  * Creation Date: 3/8/2019
  * ---------------------------------------------------------------------------
 */
+#ifndef ROBOT_H
+#define ROBOT_H
+
 #include "Board.h"
 #include <string>
 

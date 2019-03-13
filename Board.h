@@ -1,3 +1,14 @@
+/**
+ * ---------------------------------------------------------------------------
+ * File name: Board.h
+ * Project name: Project 3
+ * Purpose: A structure for holding the setup instruction for the search grid
+ * ---------------------------------------------------------------------------
+ * Creator's name and email: Koi Stephanos, stephanos@etsu.edu
+ * Course:  Operating Systems
+ * Creation Date: 2/12/2019
+ * ---------------------------------------------------------------------------
+*/
 #ifndef MYSTRUCT_H
 #define MYSTRUCT_H
 
