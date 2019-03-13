@@ -57,7 +57,8 @@ int main(int argc, char** argv) {
     Robot robots[NUMBER_OF_ROBOTS];
     int robotpipes[NUMBER_OF_ROBOTS * 2];
     int logpipe[2];
-    int newpipe[2], parentpipe[2];
+    int newpipe[2];
+    int parentpipe[2];
     int pipes_count = 0;
     string robotupdate;
     pid_t robot_pids[NUMBER_OF_ROBOTS];
@@ -87,40 +88,36 @@ int main(int argc, char** argv) {
         robotpipes[pipes_count++] = newpipe[1]; // The write end
     }
 
-    //Write all robot commands from robotcommands
-    for (int i = 0; i < NUMBER_OF_ROBOTS; i++) {
-      for (int j = 0; j < robotcommands[i].size(); j++) {
-          msg.from = j;
-          strcpy(msg.payload, robotcommands[i][j].c_str());
-          msg.payload[strlen(msg.payload)] = '\0';
+    if(parent == ::getpid()) {
+      //Write all robot commands from robotcommands
+      for (int i = 0; i < NUMBER_OF_ROBOTS; i++) {
+        for (int j = 0; j < robotcommands[i].size(); j++) {
+            msg.from = j;
+            strcpy(msg.payload, robotcommands[i][j].c_str());
+            msg.payload[strlen(msg.payload)] = '\0';
 
-          write(robotpipes[i*2 + 1], (void*)&msg, sizeof(msg));
-          //printf("Wrote to pipe #%d this: %s \n", i, msg.payload);
+            write(robotpipes[i*2 + 1], (void*)&msg, sizeof(msg));
+            //printf("Wrote to pipe #%d this: %s \n", i, msg.payload);
+        }
+        close(robotpipes[i*2 + 1]);      // EOF to child
       }
-      close(robotpipes[i*2 + 1]);      // EOF to child
-    }
-
-    //Create the children
-    /*child = fork();
-    if(child == 0) {
-      robot_pids[0] = ::getpid();   //Store the pid so we can wait on it later
-    } else {
-      robot_pids[0] = child;
-    }*/
-    //Create the robot processes, storing their pid's for parent to wait on
-    for (int i = 0 ; i < NUMBER_OF_ROBOTS ; i++)  {
-      if (robotPID < 0) {
-        perror ("Unable to fork");
-        exit(1);
-      } else if (robotPID != 0) {
-          robotPID = fork();         //Creates our next child process
-          //Child code
-          if(robotPID == 0) {
-            robot_pids[i] = ::getpid();   //Store the pid so we know which child we have for pipe reads
-            robots[i] = Robot(board);     //Create the robot from the current board
-          } else {
-            robot_pids[i] = robotPID;
-          }
+      robotPID = parent;
+      //Create the robot processes, storing their pid's for parent to wait on
+      for (int i = 0 ; i < NUMBER_OF_ROBOTS ; i++)  {
+        if (robotPID < 0) {
+          perror ("Unable to fork");
+          exit(1);
+        } else if (robotPID != 0) {
+            robotPID = fork();         //Creates our next child process
+            //Child code
+            if(robotPID == 0) {
+              robot_pids[i] = ::getpid();   //Store the pid so we know which child we have for pipe reads
+              printf ("creating Robot %d, PID: %d\n", (i + 1), robot_pids[i]);
+              robots[i] = Robot(board);     //Create the robot from the current board
+            } else {
+              robot_pids[i] = robotPID;
+            }
+        }
       }
     }
 
@@ -162,7 +159,8 @@ int main(int argc, char** argv) {
         //Read all the updates from the parent and print them to the log
         while(read(logpipe[0], (void*)&msg, sizeof(Message)) > 0) {
             printf("Log received: %s\n", msg.payload);
-            log1.writeLogRecord(msg.payload);
+            //util_funcs::sendToLog(log1, string(msg.payload));
+            log1.writeLogRecord(string(msg.payload));
         }
         //Close read end of logpipe and close logfile
         close(logpipe[0]);
