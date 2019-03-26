@@ -1,5 +1,5 @@
 hw3: main.cpp robot.o log.o
-	g++ -std=c++11 –lpthread main.cpp robot.o log.o -o hw3
+	g++ -std=c++11 main.cpp robot.o log.o -lpthread -o hw3
 robot.o: Robot.cpp Robot.h
 	g++ -std=c++11 -c Robot.cpp -o robot.o
 log.o: Log.cpp Log.h
