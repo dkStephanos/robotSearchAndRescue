@@ -1,7 +1,7 @@
 /**
  * ---------------------------------------------------------------------------
  * File name: Log.cpp
- * Project name: Project 3
+ * Project name: Project 4
  * Purpose: Body of the Log class primarily used for opening/writing/closing the log file.
  * ---------------------------------------------------------------------------
  * Creator's name and email: Koi Stephanos, stephanos@etsu.edu

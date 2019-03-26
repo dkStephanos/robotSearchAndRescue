@@ -1,8 +1,9 @@
 /**
  * ---------------------------------------------------------------------------
  * File name: main.cpp
- * Project name: Project 3
- * Purpose: Clones the parent process before having the child output the PIDs and the parent launches hw1.
+ * Project name: Project 4
+ * Purpose: Creates child 'robot' threads that take commands from the parent and returns their results
+ *          to the parent which then forwards logging information to the forked log process
  * ---------------------------------------------------------------------------
  * Creator's name and email: Koi Stephanos, stephanos@etsu.edu
  * Course:  Operating Systems

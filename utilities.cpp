@@ -1,7 +1,7 @@
 /**
  * ---------------------------------------------------------------------------
  * File name: utilities.cpp
- * Project name: Project 3
+ * Project name: Project 4
  * Purpose: Provides utility functions primarily for parsing command line arguments.
  * ---------------------------------------------------------------------------
  * Creator's name and email: Koi Stephanos, stephanos@etsu.edu
