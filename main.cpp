@@ -25,12 +25,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
-#include <semaphore.h> 
+#include <semaphore.h>
 
 struct Message {
     int from;
     char payload[32];
 };
+
+void *robotThreadWork(void*) {
+    cout << "I am a robot.\n";
+    pthread_exit(0);
+}
 
 int main(int argc, char** argv) {
 
@@ -63,6 +68,8 @@ int main(int argc, char** argv) {
     string robotupdate;
     pid_t logPID;
     pid_t parent = ::getpid();
+    pthread_t robots_ts[NUMBER_OF_ROBOTS];
+
     printf ("Parent is %d, num children = %d\n", parent, NUMBER_OF_ROBOTS);
 
     //Check for cmdfile, getting input from user if not found
@@ -82,7 +89,7 @@ int main(int argc, char** argv) {
       }
       //Create the robot processes, storing their pid's for parent to wait on
       for (int i = 0 ; i < NUMBER_OF_ROBOTS ; i++)  {
-
+          pthread_create(&robots_ts[i], NULL, robotThreadWork, NULL);
       }
     }
 
@@ -125,6 +132,7 @@ int main(int argc, char** argv) {
         //Wait on threads to join...
         for (int i = 0; i < NUMBER_OF_ROBOTS; i++) {
           cout << "Waiting for thread: to finish" << endl;
+          pthread_join(robots_ts[i], NULL);               // Wait for p to finish
           cout << "Thread: has shut down" << endl;
         }
         cout << "Waiting for Log: " << logPID << " to finish" << endl;
