@@ -74,6 +74,13 @@ int main(int argc, char** argv) {
     pid_t logPID;
     pid_t parent = ::getpid();
     pthread_t robots_ts[NUMBER_OF_ROBOTS];
+    pthread_mutex_t parentlock = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_t robotlocks[NUMBER_OF_ROBOTS];
+    //Loop through robot locks and initialize them
+    for (int i = 0; i < NUMBER_OF_ROBOTS; i++) {
+        robotlocks[i] = PTHREAD_MUTEX_INITIALIZER;
+    }
+
 
     printf ("Parent is %d, num children = %d\n", parent, NUMBER_OF_ROBOTS);
     Message test = {
