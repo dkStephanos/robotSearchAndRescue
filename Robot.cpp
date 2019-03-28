@@ -68,7 +68,7 @@ int Robot::updatePosition(char direction) {
       }
       break;
     default:
-      return -1;  //if the direction doesn't match, we have a bad command
+      return -1;  //if the direction doesn't match, we have a bad command or we are quitting
   }
   return 1; //Signals everything went okay
 }
