@@ -20,6 +20,7 @@
 #include <sstream>
 #include <vector>
 #include <cstring>
+#include <queue>
 #include <sys/wait.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +35,8 @@ struct Message {
 
 void *robotThreadWork(void*) {
     cout << "I am a robot.\n";
+    //Unlocks mutex, dequeue instruction, if Q, exit, otherwise make move, and enqueue current position, relock mutex
+
     pthread_exit(0);
 }
 
@@ -63,6 +66,8 @@ int main(int argc, char** argv) {
     std::vector<string> robotcommands[NUMBER_OF_ROBOTS];
     Message msg{0, "Blagaga"};
     Robot robots[NUMBER_OF_ROBOTS];
+    queue<Message> parentqueue;
+    queue<Message> robotqueues[NUMBER_OF_ROBOTS];
     int logpipe[2];
     int pipes_count = 0;
     string robotupdate;
@@ -71,6 +76,11 @@ int main(int argc, char** argv) {
     pthread_t robots_ts[NUMBER_OF_ROBOTS];
 
     printf ("Parent is %d, num children = %d\n", parent, NUMBER_OF_ROBOTS);
+    Message test = {
+            1,
+            "This is a test!",
+    };
+    parentqueue.push(test);
 
     //Check for cmdfile, getting input from user if not found
     util_funcs::checkForCommandFile(argv, argc, cmdfilename, log1, cmdfile, line, cmdline_commands);
@@ -85,20 +95,18 @@ int main(int argc, char** argv) {
     if(true) {
       //Write all robot commands from robotcommands
       for (int i = 0; i < NUMBER_OF_ROBOTS; i++) {
-
+          for (int j = 0; j < robotcommands[i].size(); j++) {
+              msg.from = j;
+              strcpy(msg.payload, robotcommands[i][j].c_str());
+              msg.payload[strlen(msg.payload)] = '\0';
+              robotqueues[i].push(msg);
+              printf("Parent pushed %s into queue: %d\n", msg.payload, i);
+          }
       }
       //Create the robot processes, storing their pid's for parent to wait on
       for (int i = 0 ; i < NUMBER_OF_ROBOTS ; i++)  {
           pthread_create(&robots_ts[i], NULL, robotThreadWork, NULL);
       }
-    }
-
-    //Child code for reading/processing commands. Loop through robots based on pid, and read
-    //from the corresponding pipe, process the move, and send updated position to parent for logging
-    for(int i = 0; i < NUMBER_OF_ROBOTS; i++) {
-      //Child code
-
-        //Read all commands from queue
     }
 
     //Parent Code
@@ -121,8 +129,10 @@ int main(int argc, char** argv) {
         log1.close();
       } else {  //More parent code
         close(logpipe[0]);
-        //Loop through parents pipe and pass on to logging process
-        while(false) {
+        //Loop through parents queue and pass on to logging process
+        while(!parentqueue.empty()) {
+            msg = parentqueue.front();
+            parentqueue.pop();
             printf("Parent received: %s\n", msg.payload);
             msg.payload[strlen(msg.payload)] = '\0';
             write(logpipe[1], (void*)&msg, sizeof(msg));
