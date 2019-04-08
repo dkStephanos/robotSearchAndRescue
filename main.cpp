@@ -52,10 +52,10 @@ void *robotThreadWork(void*) {
             while(true) {
                 //Dequeue the instruction
                 sem_wait(&robotsems[i]);
-                pthread_mutex_lock(&robotlocks[i]);
-                msg = robotqueues[i].front();
-                robotqueues[i].pop();
-                pthread_mutex_unlock(&robotlocks[i]);
+                    pthread_mutex_lock(&robotlocks[i]);
+                        msg = robotqueues[i].front();
+                        robotqueues[i].pop();
+                    pthread_mutex_unlock(&robotlocks[i]);
                 sem_post(&robotsems[i]);
 
                 //Logs what the robot received from queue
@@ -74,11 +74,11 @@ void *robotThreadWork(void*) {
                 strcpy(msg.payload, robotupdate.c_str());
                 msg.payload[strlen(msg.payload)] = '\0';
 
-                //Engueue the result
+                //Enqueue the result
                 sem_wait(&parentsem);
-                pthread_mutex_lock(&parentlock);
-                printf("I am inside the parent lock\n");
-                pthread_mutex_unlock(&parentlock);
+                    pthread_mutex_lock(&parentlock);
+                        parentqueue.push(msg);
+                    pthread_mutex_unlock(&parentlock);
                 sem_post(&parentsem);
             }
         }
@@ -122,13 +122,8 @@ int main(int argc, char** argv) {
         sem_init(&robotsems[i], 0, 0);
     }
 
-
-    printf ("Parent is %d, num children = %d\n", parent, NUMBER_OF_ROBOTS);
-    Message test = {
-            1,
-            "This is a test!",
-    };
-    parentqueue.push(test);
+    //Log the parent ID and number of threads
+    printf ("Parent is %d, num threads = %d\n", parent, NUMBER_OF_ROBOTS);
 
     //Check for cmdfile, getting input from user if not found
     util_funcs::checkForCommandFile(argv, argc, cmdfilename, log1, cmdfile, line, cmdline_commands);
