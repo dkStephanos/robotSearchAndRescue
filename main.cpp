@@ -33,10 +33,23 @@ struct Message {
     char payload[32];
 };
 
-void *robotThreadWork(void*) {
-    cout << "I am a robot.\n";
-    //Unlocks mutex, dequeue instruction, if Q, exit, otherwise make move, and enqueue current position, relock mutex
+const int MAX_ROBOTS = 5;
+pthread_mutex_t parentlock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t robotlocks[MAX_ROBOTS];      //Leave enough space for the maximum robot amount, we will initialize later
+sem_t parentsem;
+sem_t robotsems[MAX_ROBOTS];
+string example = "This is an example";
+pthread_t robots_ts[MAX_ROBOTS];
 
+void *robotThreadWork(void*) {
+    printf("I am robot thread id = %d\n", pthread_self());
+    for (int i = 0; i < 5; i++) {
+        if(robots_ts[i] == pthread_self()) {
+            printf("My id in array = %d\n", i);
+        }
+    }
+    //Unlocks mutex, dequeue instruction, if Q, exit, otherwise make move, and enqueue current position, re-lock mutex
+    cout << example;
     pthread_exit(0);
 }
 
@@ -73,12 +86,11 @@ int main(int argc, char** argv) {
     string robotupdate;
     pid_t logPID;
     pid_t parent = ::getpid();
-    pthread_t robots_ts[NUMBER_OF_ROBOTS];
-    pthread_mutex_t parentlock = PTHREAD_MUTEX_INITIALIZER;
-    pthread_mutex_t robotlocks[NUMBER_OF_ROBOTS];
-    //Loop through robot locks and initialize them
+    sem_init(&parentsem, 0, 0);
+    //Loop through robot locks/semaphors and initialize them
     for (int i = 0; i < NUMBER_OF_ROBOTS; i++) {
         robotlocks[i] = PTHREAD_MUTEX_INITIALIZER;
+        sem_init(&robotsems[i], 0, 0);
     }
 
 
@@ -112,7 +124,10 @@ int main(int argc, char** argv) {
       }
       //Create the robot processes, storing their pid's for parent to wait on
       for (int i = 0 ; i < NUMBER_OF_ROBOTS ; i++)  {
-          pthread_create(&robots_ts[i], NULL, robotThreadWork, NULL);
+          if( pthread_create(&robots_ts[i], NULL, robotThreadWork, NULL) ) {
+              printf("Thread creation failed.\n");
+              exit(0);
+          }
       }
     }
 
