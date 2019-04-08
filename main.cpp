@@ -34,7 +34,8 @@ struct Message {
 };
 
 const int MAX_ROBOTS = 5;
-Message msg{0, "Blagaga"};
+Message msgs[MAX_ROBOTS];
+Message msg = {0, "Blagaga"};
 string robotupdate;
 Robot robots[MAX_ROBOTS];
 queue<Message> parentqueue;
@@ -47,37 +48,38 @@ pthread_t robots_ts[MAX_ROBOTS];
 
 void *robotThreadWork(void*) {
     printf("I am robot thread id = %d\n", pthread_self());
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < MAX_ROBOTS; i++) {
         if(robots_ts[i] == pthread_self()) {
             while(true) {
                 //Dequeue the instruction
                 sem_wait(&robotsems[i]);
                     pthread_mutex_lock(&robotlocks[i]);
-                        msg = robotqueues[i].front();
+                        msgs[i] = robotqueues[i].front();
                         robotqueues[i].pop();
                     pthread_mutex_unlock(&robotlocks[i]);
                 sem_post(&robotsems[i]);
 
                 //Logs what the robot received from queue
-                printf("Robot #%d received: %s\n", (i + 1), msg.payload);
+                printf("Robot #%d received: %s\n", (i + 1), msgs[i].payload);
 
                 //If we get the Q command, break the loop
-                if(strcmp(msg.payload, "Q") == 0) {
+                if(strcmp(msgs[i].payload, "Q") == 0) {
                     break;
                 }
 
                 //Take the direction from the end of command and pass to getPosition robot method
-                robots[i].updatePosition(msg.payload[strlen(msg.payload) -1]);
+                robots[i].updatePosition(msgs[i].payload[strlen(msgs[i].payload) -1]);
                 int *position = robots[i].getPosition();
                 //Build update string and write to parent pipe
                 robotupdate = "P " + std::to_string(i + 1) + " " + std::to_string(position[0]) + " " + std::to_string(position[1]);
-                strcpy(msg.payload, robotupdate.c_str());
-                msg.payload[strlen(msg.payload)] = '\0';
+                strcpy(msgs[i].payload, robotupdate.c_str());
+                msgs[i].payload[strlen(msgs[i].payload)] = '\0';
 
                 //Enqueue the result
                 sem_wait(&parentsem);
                     pthread_mutex_lock(&parentlock);
-                        parentqueue.push(msg);
+                        printf("Robot #%d pushed: %s\n", (i + 1), msgs[i].payload);
+                        parentqueue.push(msgs[i]);
                     pthread_mutex_unlock(&parentlock);
                 sem_post(&parentsem);
             }
@@ -113,6 +115,7 @@ int main(int argc, char** argv) {
     std::vector<string> robotcommands[NUMBER_OF_ROBOTS];
     int logpipe[2];
     int pipes_count = 0;
+    int numberofcommands = 0;
     pid_t logPID;
     pid_t parent = ::getpid();
     sem_init(&parentsem, 0, 0);
@@ -136,25 +139,25 @@ int main(int argc, char** argv) {
 
     //Parent code
     if(true) {
-        msg.from = 0;
       //Write all robot commands from robotcommands
       for (int i = 0; i < NUMBER_OF_ROBOTS; i++) {
           for (int j = 0; j < robotcommands[i].size(); j++) {
-              strcpy(msg.payload, robotcommands[i][j].c_str());
-              msg.payload[strlen(msg.payload)] = '\0';
+              numberofcommands++;
+              strcpy(msgs[i].payload, robotcommands[i][j].c_str());
+              msgs[i].payload[strlen(msgs[i].payload)] = '\0';
 
               sem_wait(&robotsems[i]);
                 pthread_mutex_lock(&robotlocks[i]);
-                    robotqueues[i].push(msg);
+                    robotqueues[i].push(msgs[i]);
                 pthread_mutex_unlock(&robotlocks[i]);
               sem_post(&robotsems[i]);
 
-              printf("Parent pushed %s into queue: %d\n", msg.payload, i);
+              printf("Parent pushed %s into queue: %d\n", msgs[i].payload, i);
           }
-          strcpy(msg.payload, "Q");
+          strcpy(msgs[i].payload, "Q");
           sem_wait(&robotsems[i]);
             pthread_mutex_lock(&robotlocks[i]);
-                robotqueues[i].push(msg);
+                robotqueues[i].push(msgs[i]);
             pthread_mutex_unlock(&robotlocks[i]);
           sem_post(&robotsems[i]);
       }
@@ -179,7 +182,10 @@ int main(int argc, char** argv) {
         //Read all the updates from the parent and print them to the log
         while(read(logpipe[0], (void*)&msg, sizeof(Message)) > 0) {
             printf("Log received: %s\n", msg.payload);
-            //util_funcs::sendToLog(log1, string(msg.payload));
+            //If we get the Q command, break the loop
+            if(strcmp(msg.payload, "Q") == 0) {
+                break;
+            }
             log1.writeLogRecord(string(msg.payload));
         }
         //Close read end of logpipe and close logfile
@@ -188,7 +194,7 @@ int main(int argc, char** argv) {
       } else {  //More parent code
         close(logpipe[0]);
         //Loop through parents queue and pass on to logging process
-        while(!parentqueue.empty()) {
+        for(int i = 0; i < numberofcommands; i++) {
             sem_wait(&parentsem);
                 pthread_mutex_lock(&parentlock);
                     msg = parentqueue.front();
@@ -200,7 +206,9 @@ int main(int argc, char** argv) {
             msg.payload[strlen(msg.payload)] = '\0';
             write(logpipe[1], (void*)&msg, sizeof(msg));
         }
-        //We're done logging, so close write end of logpipe
+        //We're done logging, so write Q command and close write end of logpipe
+        strcpy(msg.payload, "Q");
+        write(logpipe[1], (void*)&msg, sizeof(msg));
         close(logpipe[1]);
         //Wait on threads to join...
         for (int i = 0; i < NUMBER_OF_ROBOTS; i++) {
