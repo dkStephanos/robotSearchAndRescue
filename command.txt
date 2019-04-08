@@ -1,5 +1,5 @@
 M 1 N
-M 1 N
+M 1 S
 M 2 E
 M 3 E
 Q
