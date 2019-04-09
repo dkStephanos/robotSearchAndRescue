@@ -33,6 +33,9 @@ public:
     //Returns current position of robot as a pointer to an array containing (x,y)
     int * getPosition();
 
+    //Set board to the current board
+    void setBoard(Board curr_board);
+
     //Returns current board
     Board getBoard();
 

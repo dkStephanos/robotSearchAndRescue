@@ -28,6 +28,10 @@ void Robot::setPosition(int curr_position[2]) {
   position[1] = curr_position[1];
 }
 
+void Robot::setBoard(Board curr_board) {
+    board = curr_board;
+}
+
 int * Robot::getPosition() {
   return this->position;
 }
