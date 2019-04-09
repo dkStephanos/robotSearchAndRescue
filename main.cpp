@@ -7,7 +7,7 @@
  * ---------------------------------------------------------------------------
  * Creator's name and email: Koi Stephanos, stephanos@etsu.edu
  * Course:  Operating Systems
- * Creation Date: 2/12/2019
+ * Creation Date: 3/24/2019
  * ---------------------------------------------------------------------------
 */
 #include "Log.h"
@@ -47,7 +47,6 @@ sem_t robotsems[MAX_ROBOTS];
 pthread_t robots_ts[MAX_ROBOTS];
 
 void *robotThreadWork(void*) {
-    printf("I am robot thread id = %d\n", pthread_self());
     for (int i = 0; i < MAX_ROBOTS; i++) {
         if(robots_ts[i] == pthread_self()) {
             while(true) {
@@ -110,19 +109,22 @@ int main(int argc, char** argv) {
       return 0;
     }
 
-    const int NUMBER_OF_ROBOTS = board.numrobots;
+    const int NUMBER_OF_ROBOTS = board.numrobots;       //sets number of robots const to the value from the board setup
     std::vector<string> cmdline_commands;
     std::vector<string> robotcommands[NUMBER_OF_ROBOTS];
     int logpipe[2];
     int pipes_count = 0;
     int numberofcommands = 0;
+    int numberofcommandsreceived = 0;
     pid_t logPID;
     pid_t parent = ::getpid();
-    sem_init(&parentsem, 0, 0);
-    //Loop through robot locks/semaphors and initialize them
+    //Initialize the parent semaphor
+    sem_init(&parentsem, 0, 1);
+    //Loop through robot locks/semaphors and initialize them, and set robot boards to current board
     for (int i = 0; i < NUMBER_OF_ROBOTS; i++) {
         robotlocks[i] = PTHREAD_MUTEX_INITIALIZER;
-        sem_init(&robotsems[i], 0, 0);
+        sem_init(&robotsems[i], 0, 1);
+        robots[i].setBoard(board);
     }
 
     //Log the parent ID and number of threads
@@ -154,6 +156,7 @@ int main(int argc, char** argv) {
 
               printf("Parent pushed %s into queue: %d\n", msgs[i].payload, i);
           }
+
           strcpy(msgs[i].payload, "Q");
           sem_wait(&robotsems[i]);
             pthread_mutex_lock(&robotlocks[i]);
@@ -194,17 +197,20 @@ int main(int argc, char** argv) {
       } else {  //More parent code
         close(logpipe[0]);
         //Loop through parents queue and pass on to logging process
-        for(int i = 0; i < numberofcommands; i++) {
-            sem_wait(&parentsem);
-                pthread_mutex_lock(&parentlock);
-                    msg = parentqueue.front();
-                    parentqueue.pop();
-                pthread_mutex_unlock(&parentlock);
-            sem_post(&parentsem);
+        while(numberofcommandsreceived < numberofcommands) {
+            if (!parentqueue.empty()) {
+                sem_wait(&parentsem);
+                    pthread_mutex_lock(&parentlock);
+                        msg = parentqueue.front();
+                        parentqueue.pop();
+                    pthread_mutex_unlock(&parentlock);
+                sem_post(&parentsem);
 
-            printf("Parent received: %s\n", msg.payload);
-            msg.payload[strlen(msg.payload)] = '\0';
-            write(logpipe[1], (void*)&msg, sizeof(msg));
+                printf("Parent received: %s\n", msg.payload);
+                msg.payload[strlen(msg.payload)] = '\0';
+                write(logpipe[1], (void *) &msg, sizeof(msg));
+                numberofcommandsreceived++;
+            }
         }
         //We're done logging, so write Q command and close write end of logpipe
         strcpy(msg.payload, "Q");
