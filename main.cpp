@@ -98,7 +98,7 @@ int main(int argc, char** argv) {
     Board board;
     Log log1;
     std::ifstream setupfile, cmdfile;
-    string setupfilename, cmdfilename, line;
+    string setupfilename, cmdfilename, line, servername, portnumber;
 
     //If log file name is present in command line arguments, set the logfilename for log1
     util_funcs::checkForLogFileAndSetLogFileName(argv, argc, log1);
@@ -109,10 +109,12 @@ int main(int argc, char** argv) {
     }
 
     //Process Setup instructions
-    if(util_funcs::processSetupInstructions(log1, setupfile, line, board) == -1) {
+    if(util_funcs::processSetupInstructions(log1, setupfile, line, board, servername, portnumber) == -1) {
       cout << "Bad Setup File\n";
       return 0;
     }
+
+    cout << "Server name: " << servername << "  Port number: " << portnumber << "\n";
 
     const int NUMBER_OF_ROBOTS = board.numrobots;       //sets number of robots const to the value from the board setup
     std::vector<string> cmdline_commands;
@@ -136,8 +138,9 @@ int main(int argc, char** argv) {
     int connection;
     int value;
 
-    strcpy(hostname, "127.0.0.1");
-    strcpy(portnum, "4008");
+    //Copy over server info we collected from setupfile
+    strcpy(hostname, servername.c_str());
+    strcpy(portnum, portnumber.c_str());
 
     // Use AF_UNIX for unix pathnames instead
     // Use SOCK_DGRAM for UDP datagrams
