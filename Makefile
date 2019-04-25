@@ -4,7 +4,7 @@ server: server.cpp log.o
     g++ -std=c++11 server.cpp log.o -o server
 
 hw5: main.cpp robot.o log.o safequeue.o
-	g++ -std=c++11 main.cpp robot.o log.o -lpthread -o hw5
+	g++ -std=c++11 main.cpp robot.o log.o safequeue.o -lpthread -o hw5
 safequeue.o: SafeQueue.cpp SafeQueue.h
 	g++ -std=c++11 -c SafeQueue.cpp -o safequeue.o
 robot.o: Robot.cpp Robot.h
