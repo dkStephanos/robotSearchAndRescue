@@ -136,6 +136,7 @@ int main(int argc, char** argv) {
     int connection;
     int value;
 
+    strcpy(hostname, "127.0.0.1");
     strcpy(portnum, "4008");
 
     // Use AF_UNIX for unix pathnames instead
@@ -155,6 +156,17 @@ int main(int argc, char** argv) {
         cout << "Error getting address" << endl;
         exit(0);
     }
+
+    // Connect to the host
+    cout << "Before connect" << endl;
+    connection = connect(sockdesc, myinfo->ai_addr, myinfo->ai_addrlen);
+    if ( connection < 0 )
+    {
+        cout << "Error in connect" << endl;
+        cout << "Sockdesc: " << sockdesc << "  Addrinfo: " << myinfo  << endl;
+        exit(0);
+    }
+    cout << "Client connection = " << connection << endl;
 
     //Log the parent ID and number of threads
     printf ("Parent is %d, num threads = %d\n", parent, NUMBER_OF_ROBOTS);
@@ -202,15 +214,6 @@ int main(int argc, char** argv) {
 
     //Parent Code
     if(parent == ::getpid()) {
-        // Connect to the host
-        cout << "Before connect" << endl;
-        connection = connect(sockdesc, myinfo->ai_addr, myinfo->ai_addrlen);
-        if ( connection < 0 )
-        {
-            cout << "Error in connect" << endl;
-            exit(0);
-        }
-        cout << "Client connection = " << connection << endl;
         //Loop through parents queue and pass on to logging process
         while(numberofcommandsreceived < numberofcommands) {
             if (!parentqueue.empty()) {
