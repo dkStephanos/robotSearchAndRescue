@@ -30,3 +30,11 @@ Message SafeQueue::dequeue() {
 
     return msg;
 }
+
+bool SafeQueue::isEmpty() {
+    if(messagequeue.empty()) {
+        return true;
+    } else {
+        return false;
+    }
+}

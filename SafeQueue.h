@@ -36,6 +36,8 @@ public:
 
     Message dequeue();
 
+    bool isEmpty();
+
 };
 
 
