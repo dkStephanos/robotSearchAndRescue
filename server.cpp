@@ -76,12 +76,6 @@ int main(int argc, char** argv )
       exit(0);
    }
 
-   // Open the log file
-   if(log1.open() < 0) {
-       cout << "Error opening log file" << endl;
-       exit(0);
-   }
-
    // Now listen to the socket
    if ( listen(sockdesc, 1) < 0 )
    {
@@ -95,6 +89,16 @@ int main(int argc, char** argv )
    if ( connection < 0 )
    {
       cout << "Error in accept" << endl;
+      exit(0);
+   }
+
+   value = read(connection, (char*)&mymessage, sizeof(Message));
+
+   log1.setLogfileName(mymessage.payload);
+
+   // Open the log file
+   if(log1.open() < 0) {
+      cout << "Error opening log file" << endl;
       exit(0);
    }
 
@@ -113,8 +117,6 @@ int main(int argc, char** argv )
    // the for loop after one message.
    for(;;)
    {
-
-
 	 // Here's where the fork( ) or pthread_create( ) call would
 	 // normally go, passing connection (returned by accept( )
 	 // above) as a parameter.  connection is a file descriptor
