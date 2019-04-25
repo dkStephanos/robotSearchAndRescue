@@ -27,6 +27,11 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 
 struct Message {
     int from;
@@ -112,8 +117,6 @@ int main(int argc, char** argv) {
     const int NUMBER_OF_ROBOTS = board.numrobots;       //sets number of robots const to the value from the board setup
     std::vector<string> cmdline_commands;
     std::vector<string> robotcommands[NUMBER_OF_ROBOTS];
-    int logpipe[2];
-    int pipes_count = 0;
     int numberofcommands = 0;
     int numberofcommandsreceived = 0;
     pid_t logPID;
@@ -126,6 +129,32 @@ int main(int argc, char** argv) {
         sem_init(&robotsems[i], 0, 1);
         robots[i].setBoard(board);
     }
+    struct addrinfo *myinfo; // Address record
+    int sockdesc;
+    char hostname[81];
+    char portnum[81];
+    int connection;
+    int value;
+
+    strcpy(portnum, "4008");
+
+    // Use AF_UNIX for unix pathnames instead
+    // Use SOCK_DGRAM for UDP datagrams
+    cout << "Before socket" << endl;
+    sockdesc = socket(AF_INET, SOCK_STREAM, 0);
+    if ( sockdesc < 0 )
+    {
+        cout << "Error creating socket" << endl;
+        exit(0);
+    }
+
+    // Set up the address record
+    cout << "Before getaddrinfo" << endl;
+    if ( getaddrinfo(hostname, portnum, NULL, &myinfo) != 0 )
+    {
+        cout << "Error getting address" << endl;
+        exit(0);
+    }
 
     //Log the parent ID and number of threads
     printf ("Parent is %d, num threads = %d\n", parent, NUMBER_OF_ROBOTS);
@@ -136,8 +165,6 @@ int main(int argc, char** argv) {
     //Process Command instructions building a vector for each Child/Robot
     util_funcs::processCommandInstructions(log1, cmdfile, cmdline_commands, line, robotcommands, NUMBER_OF_ROBOTS);
 
-    //Create log pipe for the parent to send updates through so they can be logged
-    pipe(logpipe);
 
     //Parent code
     if(true) {
@@ -175,27 +202,15 @@ int main(int argc, char** argv) {
 
     //Parent Code
     if(parent == ::getpid()) {
-      //Create the process for the log
-      logPID = fork();
-      //Log code
-      if(logPID == 0) {
-        //Close unused write end of logpipe and open logfile
-        close(logpipe[1]);
-        log1.open();
-        //Read all the updates from the parent and print them to the log
-        while(read(logpipe[0], (void*)&msg, sizeof(Message)) > 0) {
-            printf("Log received: %s\n", msg.payload);
-            //If we get the Q command, break the loop
-            if(strcmp(msg.payload, "Q") == 0) {
-                break;
-            }
-            log1.writeLogRecord(string(msg.payload));
+        // Connect to the host
+        cout << "Before connect" << endl;
+        connection = connect(sockdesc, myinfo->ai_addr, myinfo->ai_addrlen);
+        if ( connection < 0 )
+        {
+            cout << "Error in connect" << endl;
+            exit(0);
         }
-        //Close read end of logpipe and close logfile
-        close(logpipe[0]);
-        log1.close();
-      } else {  //More parent code
-        close(logpipe[0]);
+        cout << "Client connection = " << connection << endl;
         //Loop through parents queue and pass on to logging process
         while(numberofcommandsreceived < numberofcommands) {
             if (!parentqueue.empty()) {
@@ -208,14 +223,20 @@ int main(int argc, char** argv) {
 
                 printf("Parent received: %s\n", msg.payload);
                 msg.payload[strlen(msg.payload)] = '\0';
-                write(logpipe[1], (void *) &msg, sizeof(msg));
+
+                // Display the message to be sent
+                cout << "Client sends: " << msg.payload << endl;
+
+                // Send the message to the server
+                write(sockdesc, (char*)&msg, sizeof(Message));
                 numberofcommandsreceived++;
             }
         }
-        //We're done logging, so write Q command and close write end of logpipe
+        //We're done logging, so write Q command
         strcpy(msg.payload, "Q");
-        write(logpipe[1], (void*)&msg, sizeof(msg));
-        close(logpipe[1]);
+        // Send the message to the server
+        write(sockdesc, (char*)&msg, sizeof(Message));
+
         //Wait on threads to join...
         for (int i = 0; i < NUMBER_OF_ROBOTS; i++) {
           cout << "Waiting for thread: to finish" << endl;
@@ -226,6 +247,5 @@ int main(int argc, char** argv) {
         waitpid(logPID, NULL, 0);
         cout << "Log: " << logPID << " has shut down" << endl;
       }
-    }
     return 0;
 }
