@@ -95,14 +95,15 @@ namespace util_funcs {
         return -1;
     }
 
-    int processSetupInstructions(Log& log1, std::ifstream& setupfile, string line, Board &board) {
-
+    int processSetupInstructions(Log& log1, std::ifstream& setupfile, string line, Board &board, string &servername, string &portnumber) {
+        int instructionsProcessed = 0;
+        char* p;
         //If result of open is 0, something went wrong, so we exit, otherwise, loop through setup and command lines, appending to log
         if(log1.open() == 0) {
             return 0;
         } else {
             //Loop through setup instructions
-            while (std::getline(setupfile, line))
+            while (std::getline(setupfile, line) && instructionsProcessed < 3)
             {
                 log1.writeLogRecord(line);
                 std::stringstream   linestream(line);
@@ -136,7 +137,17 @@ namespace util_funcs {
                   log1.writeLogRecord("Bad Setup File"); //Write to log so we know we had a bad setup file
                   return -1; //return -1 so we know something went wrong
                 }
+                instructionsProcessed++;
             }
+            servername = line;
+            log1.writeLogRecord(servername);
+            std::getline(setupfile, portnumber);
+            if(std::strtol(portnumber.c_str(), &p, 10) > 1024) {
+                log1.writeLogRecord(portnumber);
+            } else {
+                return -1;
+            }
+
             //Finally, close log1 appending final timestamp and "End"
             log1.close();
         }
