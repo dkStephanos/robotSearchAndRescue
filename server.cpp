@@ -17,8 +17,9 @@ struct Message {
 };
 
 int checkForPortNumber(char** argv, int argc) {
+   char* p;
    if(argv[1] && argv[2] && strcmp(argv[1], "-p") == 0) {
-      if(stoi(argv[2]) > 1024) {
+      if(strtol(argv[2], &p, 10) > 1024) {
          return 1;
       } else {
          //If the port number given isn't an int above 1024, return 0 so we know we have a bad port number
