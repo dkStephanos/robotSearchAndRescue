@@ -13,6 +13,7 @@
 #include "Log.h"
 #include "Board.h"
 #include "Robot.h"
+#include "SafeQueue.h"
 #include "utilities.cpp"
 #include <iostream>
 #include <fstream>
@@ -33,22 +34,14 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-struct Message {
-    int from;
-    char payload[32];
-};
 
 const int MAX_ROBOTS = 5;
 Message msgs[MAX_ROBOTS];
 Message msg = {0, "Blagaga"};
 string robotupdate;
 Robot robots[MAX_ROBOTS];
-queue<Message> parentqueue;
-queue<Message> robotqueues[MAX_ROBOTS];
-pthread_mutex_t parentlock = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t robotlocks[MAX_ROBOTS];      //Leave enough space for the maximum robot amount, we will initialize later
-sem_t parentsem;
-sem_t robotsems[MAX_ROBOTS];
+SafeQueue parentqueue;
+SafeQueue robotqueues[MAX_ROBOTS];
 pthread_t robots_ts[MAX_ROBOTS];
 
 void *robotThreadWork(void*) {
@@ -56,12 +49,7 @@ void *robotThreadWork(void*) {
         if(robots_ts[i] == pthread_self()) {
             while(true) {
                 //Dequeue the instruction
-                sem_wait(&robotsems[i]);
-                    pthread_mutex_lock(&robotlocks[i]);
-                        msgs[i] = robotqueues[i].front();
-                        robotqueues[i].pop();
-                    pthread_mutex_unlock(&robotlocks[i]);
-                sem_post(&robotsems[i]);
+                msgs[i] = robotqueues[i].dequeue();
 
                 //Logs what the robot received from queue
                 printf("Robot #%d received: %s\n", (i + 1), msgs[i].payload);
@@ -80,12 +68,7 @@ void *robotThreadWork(void*) {
                 msgs[i].payload[strlen(msgs[i].payload)] = '\0';
 
                 //Enqueue the result
-                sem_wait(&parentsem);
-                    pthread_mutex_lock(&parentlock);
-                        printf("Robot #%d pushed: %s\n", (i + 1), msgs[i].payload);
-                        parentqueue.push(msgs[i]);
-                    pthread_mutex_unlock(&parentlock);
-                sem_post(&parentsem);
+                parentqueue.enqueue(msgs[i]);
             }
         }
     }
@@ -110,8 +93,8 @@ int main(int argc, char** argv) {
 
     //Process Setup instructions
     if(util_funcs::processSetupInstructions(log1, setupfile, line, board, servername, portnumber) == -1) {
-      cout << "Bad Setup File\n";
-      return 0;
+        cout << "Bad Setup File\n";
+        return 0;
     }
 
     cout << "Server name: " << servername << "  Port number: " << portnumber << "\n";
@@ -123,14 +106,6 @@ int main(int argc, char** argv) {
     int numberofcommandsreceived = 0;
     pid_t logPID;
     pid_t parent = ::getpid();
-    //Initialize the parent semaphor
-    sem_init(&parentsem, 0, 1);
-    //Loop through robot locks/semaphors and initialize them, and set robot boards to current board
-    for (int i = 0; i < NUMBER_OF_ROBOTS; i++) {
-        robotlocks[i] = PTHREAD_MUTEX_INITIALIZER;
-        sem_init(&robotsems[i], 0, 1);
-        robots[i].setBoard(board);
-    }
     struct addrinfo *myinfo; // Address record
     int sockdesc;
     char hostname[81];
@@ -187,49 +162,36 @@ int main(int argc, char** argv) {
 
     //Parent code
     if(true) {
-      //Write all robot commands from robotcommands
-      for (int i = 0; i < NUMBER_OF_ROBOTS; i++) {
-          for (int j = 0; j < robotcommands[i].size(); j++) {
-              numberofcommands++;
-              strcpy(msgs[i].payload, robotcommands[i][j].c_str());
-              msgs[i].payload[strlen(msgs[i].payload)] = '\0';
+        //Write all robot commands from robotcommands
+        for (int i = 0; i < NUMBER_OF_ROBOTS; i++) {
+            for (int j = 0; j < robotcommands[i].size(); j++) {
+                numberofcommands++;
+                strcpy(msgs[i].payload, robotcommands[i][j].c_str());
+                msgs[i].payload[strlen(msgs[i].payload)] = '\0';
 
-              sem_wait(&robotsems[i]);
-                pthread_mutex_lock(&robotlocks[i]);
-                    robotqueues[i].push(msgs[i]);
-                pthread_mutex_unlock(&robotlocks[i]);
-              sem_post(&robotsems[i]);
+                robotqueues[i].enqueue(msgs[i]);
 
-              printf("Parent pushed %s into queue: %d\n", msgs[i].payload, i);
-          }
+                printf("Parent pushed %s into queue: %d\n", msgs[i].payload, i);
+            }
 
-          strcpy(msgs[i].payload, "Q");
-          sem_wait(&robotsems[i]);
-            pthread_mutex_lock(&robotlocks[i]);
-                robotqueues[i].push(msgs[i]);
-            pthread_mutex_unlock(&robotlocks[i]);
-          sem_post(&robotsems[i]);
-      }
-      //Create the robot processes, storing their pid's for parent to wait on
-      for (int i = 0 ; i < NUMBER_OF_ROBOTS ; i++)  {
-          if( pthread_create(&robots_ts[i], NULL, robotThreadWork, NULL) ) {
-              printf("Thread creation failed.\n");
-              exit(0);
-          }
-      }
+            strcpy(msgs[i].payload, "Q");
+            robotqueues[i].enqueue(msgs[i]);
+        }
+        //Create the robot processes, storing their pid's for parent to wait on
+        for (int i = 0 ; i < NUMBER_OF_ROBOTS ; i++)  {
+            if( pthread_create(&robots_ts[i], NULL, robotThreadWork, NULL) ) {
+                printf("Thread creation failed.\n");
+                exit(0);
+            }
+        }
     }
 
     //Parent Code
     if(parent == ::getpid()) {
         //Loop through parents queue and pass on to logging process
         while(numberofcommandsreceived < numberofcommands) {
-            if (!parentqueue.empty()) {
-                sem_wait(&parentsem);
-                    pthread_mutex_lock(&parentlock);
-                        msg = parentqueue.front();
-                        parentqueue.pop();
-                    pthread_mutex_unlock(&parentlock);
-                sem_post(&parentsem);
+            if (!parentqueue.isEmpty()) {
+                msg = parentqueue.dequeue();
 
                 printf("Parent received: %s\n", msg.payload);
                 msg.payload[strlen(msg.payload)] = '\0';
@@ -249,13 +211,13 @@ int main(int argc, char** argv) {
 
         //Wait on threads to join...
         for (int i = 0; i < NUMBER_OF_ROBOTS; i++) {
-          cout << "Waiting for thread: to finish" << endl;
-          pthread_join(robots_ts[i], NULL);               // Wait for p to finish
-          cout << "Thread: has shut down" << endl;
+            cout << "Waiting for thread: to finish" << endl;
+            pthread_join(robots_ts[i], NULL);               // Wait for p to finish
+            cout << "Thread: has shut down" << endl;
         }
         cout << "Waiting for Log: " << logPID << " to finish" << endl;
         waitpid(logPID, NULL, 0);
         cout << "Log: " << logPID << " has shut down" << endl;
-      }
+    }
     return 0;
 }
