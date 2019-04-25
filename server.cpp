@@ -63,7 +63,7 @@ int main(int argc, char** argv )
    }
 
    // Set up the address record
-   if ( getaddrinfo("127.0.0.1", portnum, NULL, &myinfo) != 0 )
+   if ( getaddrinfo("einstein.etsu.edu", portnum, NULL, &myinfo) != 0 )
    {
       cout << "Error getting address" << endl;
       exit(0);
