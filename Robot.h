@@ -1,7 +1,7 @@
 /**
  * ---------------------------------------------------------------------------
  * File name: Robot.h
- * Project name: Project 4
+ * Project name: Project 5
  * Purpose: Outline of functionality for the Robot class
  * ---------------------------------------------------------------------------
  * Creator's name and email: Koi Stephanos, stephanos@etsu.edu

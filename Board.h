@@ -1,7 +1,7 @@
 /**
  * ---------------------------------------------------------------------------
  * File name: Board.h
- * Project name: Project 4
+ * Project name: Project 5
  * Purpose: A structure for holding the setup instruction for the search grid
  * ---------------------------------------------------------------------------
  * Creator's name and email: Koi Stephanos, stephanos@etsu.edu

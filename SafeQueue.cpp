@@ -1,6 +1,15 @@
-//
-// Created by Koi Stephanos on 2019-04-25.
-//
+/**
+ * ---------------------------------------------------------------------------
+ * File name: SafeQueue.cpp
+ * Project name: Project 5
+ * Purpose: Provides the methods for the SafeQueue class enabling safe queueing and dequeue by
+ *          leveraging mutexes and sempahors
+ * ---------------------------------------------------------------------------
+ * Creator's name and email: Koi Stephanos, stephanos@etsu.edu
+ * Course:  Operating Systems
+ * Creation Date: 4/24/2019
+ * ---------------------------------------------------------------------------
+*/
 
 #include "SafeQueue.h"
 

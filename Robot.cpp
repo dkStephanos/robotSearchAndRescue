@@ -1,7 +1,7 @@
 /**
  * ---------------------------------------------------------------------------
  * File name: Robot.cpp
- * Project name: Project 4
+ * Project name: Project 5
  * Purpose: Provides the functionality of the Robot class
  * ---------------------------------------------------------------------------
  * Creator's name and email: Koi Stephanos, stephanos@etsu.edu

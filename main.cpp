@@ -1,9 +1,9 @@
 /**
  * ---------------------------------------------------------------------------
  * File name: main.cpp
- * Project name: Project 4
+ * Project name: Project 5
  * Purpose: Creates child 'robot' threads that take commands from the parent and returns their results
- *          to the parent which then forwards logging information to the forked log process
+ *          to the parent which then forwards logging information via sockets to the logger server
  * ---------------------------------------------------------------------------
  * Creator's name and email: Koi Stephanos, stephanos@etsu.edu
  * Course:  Operating Systems

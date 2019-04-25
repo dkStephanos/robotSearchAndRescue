@@ -1,7 +1,14 @@
-//
-// Created by Koi Stephanos on 2019-04-25.
-//
-
+/**
+ * ---------------------------------------------------------------------------
+ * File name: SafeQueue.h
+ * Project name: Project 5
+ * Purpose: Provides the structure for the SafeQueue class and holds the definition of our Message struct
+ * ---------------------------------------------------------------------------
+ * Creator's name and email: Koi Stephanos, stephanos@etsu.edu
+ * Course:  Operating Systems
+ * Creation Date: 4/24/2019
+ * ---------------------------------------------------------------------------
+*/
 #ifndef HW5_SAFEQUEUE_H
 #define HW5_SAFEQUEUE_H
 

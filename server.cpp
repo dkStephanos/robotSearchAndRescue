@@ -1,3 +1,15 @@
+/**
+ * ---------------------------------------------------------------------------
+ * File name: server.cpp
+ * Project name: Project 5
+ * Purpose: Creates a server bound to a socket to receive data from client and then logs that data in
+ *          the provided log file, creating one if it doesn't already exist
+ * ---------------------------------------------------------------------------
+ * Creator's name and email: Koi Stephanos, stephanos@etsu.edu
+ * Course:  Operating Systems
+ * Creation Date: 4/24/2019
+ * ---------------------------------------------------------------------------
+*/
 #include "Log.h"
 #include <stdlib.h>
 #include <unistd.h>
