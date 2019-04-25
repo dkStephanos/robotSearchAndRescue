@@ -171,6 +171,10 @@ int main(int argc, char** argv) {
     }
     cout << "Client connection = " << connection << endl;
 
+    //Send the name of the log file to the server
+    strcpy(msg.payload, log1.getLogfileName().c_str());
+    write(sockdesc, (char*)&msg, sizeof(Message));
+
     //Log the parent ID and number of threads
     printf ("Parent is %d, num threads = %d\n", parent, NUMBER_OF_ROBOTS);
 
