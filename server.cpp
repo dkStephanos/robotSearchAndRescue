@@ -132,6 +132,7 @@ int main(int argc, char** argv )
 
    // Close the connection
    close(connection);
+   log1.close();
    return 0;
 
 } // main( )
