@@ -125,8 +125,7 @@ int main(int argc, char** argv )
 	 cout << "  ivalue: " << mymessage.from << endl;
 	 cout << "  cvalue: " << mymessage.payload << endl;
 	 // Send the response string back to the client
-         write(connection, (char*)&mymessage, sizeof(Message));
-
+	 write(connection, (char*)&mymessage, sizeof(Message));
       }
 
    } // while
