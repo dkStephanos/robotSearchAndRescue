@@ -16,6 +16,20 @@ struct Message {
     char payload[32];
 };
 
+int checkForPortNumber(char** argv, int argc) {
+   if(argv[1] && argv[2] && strcmp(argv[1], "-p") == 0) {
+      if(stoi(argv[2]) > 1024) {
+         return 1;
+      } else {
+         //If the port number given isn't an int above 1024, return 0 so we know we have a bad port number
+         return 0;
+      }
+   } else {
+      //Return -1 so we know the -p command wasn't passed correctly
+      return -1;
+   }
+}
+
 int main(int argc, char** argv )
 {
    int sockdesc;            // Socket descriptor
@@ -35,14 +49,16 @@ int main(int argc, char** argv )
       exit(0);
    }
 
-   // Get the port number from the command line
-   if ( argc > 2 )
-   {
+   int status = checkForPortNumber(argv, argc);
+
+   if(status == 0) {
+      cout << "Invalid port number. Must be an int above 1024.\n";
+      exit(0);
+   } else if(status == -1) {
+      cout << "First argument must be '-p', second argument must specify port number.\n";
+      exit(0);
+   } else {
       strcpy(portnum, argv[2]);
-   }
-   else
-   {
-      strcpy(portnum, "2000");
    }
 
    // Set up the address record
