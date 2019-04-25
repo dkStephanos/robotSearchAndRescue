@@ -111,7 +111,7 @@ int main(int argc, char** argv )
 	 value = read(connection, (char*)&mymessage, sizeof(Message));
 	 cout << "value = " << value << endl;
 	 // Log the message
-	 log1.writeLogRecord(mymessage.payload);f
+	 log1.writeLogRecord(mymessage.payload);
 
 	 // Display the message
 	 cout << "Server received: " << endl;
