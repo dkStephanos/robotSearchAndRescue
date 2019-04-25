@@ -72,6 +72,15 @@ int main(int argc, char** argv )
       exit(0);
    }
 
+   cout << "Calling accept" << endl;
+   // Accept a connect, check the returned descriptor
+   connection = accept(sockdesc, NULL, NULL);
+   if ( connection < 0 )
+   {
+      cout << "Error in accept" << endl;
+      exit(0);
+   }
+
    // Note: this loop is typical of servers that accept multiple
    // connections on the same port - normally, after accept( )
    // returns, you'd fork off a process to handle that request, or
@@ -85,18 +94,10 @@ int main(int argc, char** argv )
    // So the server runs forever - see the for loop parameters -
    // well, until you kill it manually.  Here, we break from
    // the for loop after one message.
-   while(strcmp(mymessage.payload, "Q") != 0)
+   for(;;)
    {
-      cout << "Calling accept" << endl;
-      // Accept a connect, check the returned descriptor
-      connection = accept(sockdesc, NULL, NULL);
-      if ( connection < 0 )
-      {
-         cout << "Error in accept" << endl;
-         exit(0);
-      }
-      else
-      {
+
+
 	 // Here's where the fork( ) or pthread_create( ) call would
 	 // normally go, passing connection (returned by accept( )
 	 // above) as a parameter.  connection is a file descriptor
@@ -109,26 +110,18 @@ int main(int argc, char** argv )
 	 // Note that the first parameter of read is the returned
 	 // value from accept( ) above.
 	 value = read(connection, (char*)&mymessage, sizeof(Message));
-	 cout << "value = " << value << endl;
 	 // Log the message
 	 log1.writeLogRecord(mymessage.payload);
 
 	 // Display the message
 	 cout << "Server received: " << endl;
-	 cout << "  ivalue: " << mymessage.from << endl;
 	 cout << "  cvalue: " << mymessage.payload << endl;
-	 // Create a response message
-	 mymessage.from++;
-	 strcpy( mymessage.payload, "Server response" );
-	 // Display the new message
-	 cout << "Server sends back: " << endl;
-	 cout << "  ivalue: " << mymessage.from << endl;
-	 cout << "  cvalue: " << mymessage.payload << endl;
-	 // Send the response string back to the client
-	 write(connection, (char*)&mymessage, sizeof(Message));
-      }
 
-   } // while
+   if(strcmp(mymessage.payload, "Q") == 0) {
+      break;
+   }
+
+   } // for
 
    // Close the connection
    close(connection);
